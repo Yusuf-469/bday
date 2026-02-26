@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Happy Birthday Mom</title>
     
     <!-- Fonts -->
@@ -43,6 +43,24 @@
             color: var(--candle-warm);
             overflow-x: hidden;
             cursor: none;
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+        
+        /* Mobile 16:9 container */
+        @media (max-aspect-ratio: 9/16) {
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            #canvas-container,
+            #prism-bg,
+            .content {
+                max-width: 100vh !important;
+                max-height: 100vw !important;
+            }
         }
         
         /* Custom Cursor */

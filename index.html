@@ -197,27 +197,32 @@
             to { opacity: 1; }
         }
         
-        /* Prism Background - Full screen, behind everything */
+        /* Prism Background - Full screen, right behind cake */
         #prism-bg {
             position: fixed;
             inset: 0;
-            z-index: -1;
+            z-index: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(135deg, #0F172A 0%, #1a1a2e 50%, #0F172A 100%);
+            pointer-events: none;
         }
         
-        /* Canvas Container - behind content, in front of prism */
+        /* Canvas Container - cake scene, in front of prism */
         #canvas-container {
             position: fixed;
             inset: 0;
             z-index: 1;
             transition: opacity 0.8s ease;
+            background: transparent !important;
         }
         
         #canvas-container.hidden {
             opacity: 0;
             pointer-events: none;
+        }
+        
+        #canvas-container canvas {
+            background: transparent !important;
         }
         
         /* Main Content */
@@ -1090,6 +1095,7 @@
                 this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                 this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
                 this.renderer.toneMappingExposure = 1.2;
+                this.renderer.setClearColor(0x000000, 0);
                 
                 document.getElementById('canvas-container').appendChild(this.renderer.domElement);
             }

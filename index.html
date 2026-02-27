@@ -39,7 +39,7 @@
         
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--sapphire);
+            background: transparent;
             color: var(--candle-warm);
             overflow-x: hidden;
             cursor: none;
@@ -202,13 +202,21 @@
             position: fixed;
             inset: 0;
             z-index: 0;
+            width: 100vw;
+            height: 100vh;
         }
         
-        /* Canvas Container */
+        /* Canvas Container - behind content, in front of prism */
         #canvas-container {
             position: fixed;
             inset: 0;
             z-index: 1;
+            transition: opacity 0.8s ease;
+        }
+        
+        #canvas-container.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
         
         /* Main Content */
@@ -427,11 +435,7 @@
         }
         
         .section-title {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(2rem, 5vw, 3.5rem);
-            text-align: center;
-            margin-bottom: 60px;
-            color: var(--gold);
+            display: none;
         }
         
         .timeline-container {
@@ -525,6 +529,15 @@
                 0 0 100px rgba(15,23,42,0.5);
             position: relative;
             overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .crystal-ball.magical {
+            box-shadow: 
+                0 0 80px rgba(212,175,55,0.6),
+                0 0 120px rgba(212,175,55,0.4),
+                inset 0 0 80px rgba(255,255,255,0.2),
+                0 0 150px rgba(15,23,42,0.6);
         }
         
         .crystal-photo {
@@ -766,7 +779,6 @@
         
         <!-- Memory Lane Section -->
         <section class="memory-lane" id="memory-lane">
-            <h2 class="section-title">Memory Lane</h2>
             <div class="timeline-container" id="timeline">
                 <!-- Memory cards will be inserted here -->
             </div>
@@ -781,7 +793,7 @@
                 </div>
                 <div class="crystal-stand"></div>
             </div>
-            <p class="drag-hint">Drag to reveal memories</p>
+            <p class="drag-hint" id="drag-hint">Drag to reveal memories</p>
         </section>
         
         <!-- AR Section -->
@@ -1374,6 +1386,14 @@
                     const scrollY = window.scrollY;
                     const heroSection = document.getElementById('hero');
                     const heroHeight = heroSection.offsetHeight;
+                    const canvasContainer = document.getElementById('canvas-container');
+                    
+                    // Hide cake when scrolling past hero section
+                    if (scrollY > heroHeight * 0.3) {
+                        canvasContainer.classList.add('hidden');
+                    } else {
+                        canvasContainer.classList.remove('hidden');
+                    }
                     
                     if (scrollY < heroHeight) {
                         const parallax = scrollY * 0.02;
@@ -1530,24 +1550,93 @@
             
             startCrystalBall() {
                 const crystalContainer = document.getElementById('crystal-container');
+                const crystalBall = document.querySelector('.crystal-ball');
                 const crystalPhoto = document.getElementById('crystal-photo');
+                const dragHint = document.getElementById('drag-hint');
                 let crystalStartX = 0;
                 let currentRotation = 0;
                 let autoRotate = null;
+                let isDragging = false;
+                let touchStartX = 0;
                 
                 // Set initial photo
                 crystalPhoto.style.backgroundImage = `url(${CONFIG.memoryPhotos[0]})`;
                 
+                // Create magical particles
+                const createMagicalParticles = (x, y) => {
+                    for (let i = 0; i < 10; i++) {
+                        const particle = document.createElement('div');
+                        particle.style.cssText = `
+                            position: absolute;
+                            width: ${Math.random() * 8 + 4}px;
+                            height: ${Math.random() * 8 + 4}px;
+                            background: ${Math.random() > 0.5 ? '#D4AF37' : '#FFF8E7'};
+                            border-radius: 50%;
+                            left: ${x}px;
+                            top: ${y}px;
+                            pointer-events: none;
+                            z-index: 100;
+                            box-shadow: 0 0 10px #D4AF37;
+                        `;
+                        crystalContainer.appendChild(particle);
+                        
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = Math.random() * 100 + 50;
+                        const tx = Math.cos(angle) * distance;
+                        const ty = Math.sin(angle) * distance;
+                        
+                        particle.animate([
+                            { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                            { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+                        ], {
+                            duration: 1000,
+                            easing: 'ease-out'
+                        }).onfinish = () => particle.remove();
+                    }
+                };
+                
+                // Magical effect on click/touch
+                const triggerMagicalEffect = (e) => {
+                    const rect = crystalContainer.getBoundingClientRect();
+                    let x, y;
+                    
+                    if (e.touches) {
+                        x = e.touches[0].clientX - rect.left;
+                        y = e.touches[0].clientY - rect.top;
+                    } else {
+                        x = e.clientX - rect.left;
+                        y = e.clientY - rect.top;
+                    }
+                    
+                    // Add magical glow
+                    crystalBall.classList.add('magical');
+                    setTimeout(() => crystalBall.classList.remove('magical'), 500);
+                    
+                    // Create particles
+                    createMagicalParticles(x, y);
+                    
+                    // Hide hint on first interaction
+                    if (dragHint) {
+                        dragHint.style.opacity = '0';
+                        dragHint.style.transition = 'opacity 0.5s ease';
+                    }
+                };
+                
                 // Auto-rotate through photos
                 let photoIndex = 0;
                 autoRotate = setInterval(() => {
-                    photoIndex = (photoIndex + 1) % CONFIG.memoryPhotos.length;
-                    crystalPhoto.style.backgroundImage = `url(${CONFIG.memoryPhotos[photoIndex]})`;
+                    if (!isDragging) {
+                        photoIndex = (photoIndex + 1) % CONFIG.memoryPhotos.length;
+                        crystalPhoto.style.backgroundImage = `url(${CONFIG.memoryPhotos[photoIndex]})`;
+                    }
                 }, 3000);
                 
+                // Mouse events
                 crystalContainer.addEventListener('mousedown', (e) => {
+                    isDragging = true;
                     crystalStartX = e.clientX;
                     crystalContainer.style.cursor = 'grabbing';
+                    triggerMagicalEffect(e);
                     if (autoRotate) {
                         clearInterval(autoRotate);
                         autoRotate = null;
@@ -1555,6 +1644,7 @@
                 });
                 
                 window.addEventListener('mouseup', () => {
+                    isDragging = false;
                     crystalContainer.style.cursor = 'grab';
                     if (!autoRotate) {
                         autoRotate = setInterval(() => {
@@ -1571,6 +1661,46 @@
                     crystalStartX = e.clientX;
                     
                     crystalPhoto.style.transform = `rotateY(${currentRotation}°)`;
+                });
+                
+                // Touch events for mobile
+                crystalContainer.addEventListener('touchstart', (e) => {
+                    isDragging = true;
+                    touchStartX = e.touches[0].clientX;
+                    crystalContainer.style.cursor = 'grabbing';
+                    triggerMagicalEffect(e);
+                    if (autoRotate) {
+                        clearInterval(autoRotate);
+                        autoRotate = null;
+                    }
+                    e.preventDefault();
+                });
+                
+                crystalContainer.addEventListener('touchend', () => {
+                    isDragging = false;
+                    crystalContainer.style.cursor = 'grab';
+                    if (!autoRotate) {
+                        autoRotate = setInterval(() => {
+                            if (!isDragging) {
+                                photoIndex = (photoIndex + 1) % CONFIG.memoryPhotos.length;
+                                crystalPhoto.style.backgroundImage = `url(${CONFIG.memoryPhotos[photoIndex]})`;
+                            }
+                        }, 3000);
+                    }
+                });
+                
+                crystalContainer.addEventListener('touchmove', (e) => {
+                    if (touchStartX === 0) return;
+                    const delta = e.touches[0].clientX - touchStartX;
+                    currentRotation += delta * 0.5;
+                    touchStartX = e.touches[0].clientX;
+                    
+                    crystalPhoto.style.transform = `rotateY(${currentRotation}°)`;
+                });
+                
+                // Click to trigger magic
+                crystalContainer.addEventListener('click', (e) => {
+                    triggerMagicalEffect(e);
                 });
             }
             
@@ -1737,22 +1867,224 @@
             
             startAR() {
                 const arButton = document.getElementById('ar-button');
-                arButton.textContent = 'AR not supported on this device';
-                arButton.disabled = true;
+                const arDescription = document.querySelector('.ar-description');
                 
+                // Check for WebXR support
                 if (navigator.xr) {
                     navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
                         if (supported) {
-                            arButton.textContent = 'Experience in AR';
+                            arButton.textContent = '✨ Experience in AR';
                             arButton.disabled = false;
                             arButton.onclick = () => this.launchAR();
+                            arDescription.textContent = 'Tap the button to place the magical birthday cake in your physical environment using AR!';
+                        } else {
+                            this.setARFallback();
                         }
+                    }).catch(() => {
+                        this.setARFallback();
+                    });
+                } else {
+                    this.setARFallback();
+                }
+            }
+            
+            setARFallback() {
+                const arButton = document.getElementById('ar-button');
+                const arDescription = document.querySelector('.ar-description');
+                
+                // Update for 3D viewer fallback
+                arDescription.textContent = 'Tap to view the magical 3D birthday cake! You can rotate and interact with it.';
+                arButton.textContent = '🎂 View 3D Cake';
+                arButton.disabled = false;
+                arButton.onclick = () => this.launch3DViewer();
+            }
+            
+            launchAR() {
+                const arButton = document.getElementById('ar-button');
+                arButton.textContent = 'Launching AR...';
+                
+                // Request AR session
+                if (navigator.xr) {
+                    navigator.xr.requestSession('immersive-ar', {
+                        requiredFeatures: ['hit-test', 'local-floor'],
+                        optionalFeatures: ['dom-overlay'],
+                        domOverlay: { root: document.body }
+                    }).then((session) => {
+                        session.addEventListener('end', () => {
+                            arButton.textContent = '✨ Experience in AR';
+                        });
+                        
+                        this.renderer.xr.enabled = true;
+                        this.renderer.xr.setReferenceSpaceType('local-floor');
+                        this.renderer.xr.setSession(session);
+                        
+                        // Create AR cake
+                        this.createARScene();
+                        
+                    }).catch((err) => {
+                        console.log('AR session failed:', err);
+                        this.launch3DViewer();
                     });
                 }
             }
             
-            launchAR() {
-                console.log('Launching AR experience...');
+            createARScene() {
+                // AR scene is handled by the main scene, just adjust for AR
+                this.camera.position.set(0, 0, 3);
+                this.camera.lookAt(0, 0, 0);
+            }
+            
+            launch3DViewer() {
+                // Create a modal 3D viewer
+                const modal = document.createElement('div');
+                modal.id = 'viewer-modal';
+                modal.style.cssText = `
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.95);
+                    z-index: 10000;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    opacity: 0;
+                    transition: opacity 0.5s ease;
+                `;
+                
+                modal.innerHTML = `
+                    <h2 style="font-family: 'Playfair Display', serif; color: #D4AF37; font-size: 2rem; margin-bottom: 20px;">🎂 Your Birthday Cake</h2>
+                    <div id="viewer-canvas" style="width: 90vw; height: 60vh; max-width: 600px;"></div>
+                    <p style="color: #F4E4C1; margin-top: 20px; text-align: center;">Drag to rotate • Scroll to zoom</p>
+                    <button id="close-viewer" style="
+                        margin-top: 30px;
+                        padding: 15px 40px;
+                        background: linear-gradient(135deg, #D4AF37, #F4E4C1);
+                        border: none;
+                        border-radius: 30px;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        color: #0F172A;
+                        cursor: pointer;
+                    ">Close</button>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Trigger animation
+                setTimeout(() => modal.style.opacity = '1', 10);
+                
+                // Create 3D viewer scene
+                this.create3DViewer(modal.querySelector('#viewer-canvas'));
+                
+                // Close button
+                modal.querySelector('#close-viewer').addEventListener('click', () => {
+                    modal.style.opacity = '0';
+                    setTimeout(() => modal.remove(), 500);
+                });
+            }
+            
+            create3DViewer(container) {
+                const viewerScene = new THREE.Scene();
+                const viewerCamera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+                viewerCamera.position.set(0, 1, 5);
+                
+                const viewerRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                viewerRenderer.setSize(container.clientWidth, container.clientHeight);
+                viewerRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(viewerRenderer.domElement);
+                
+                // Add lighting
+                const ambient = new THREE.AmbientLight(0xFFF8E7, 0.5);
+                viewerScene.add(ambient);
+                
+                const spotlight = new THREE.SpotLight(0xFFF8E7, 2);
+                spotlight.position.set(0, 10, 5);
+                viewerScene.add(spotlight);
+                
+                // Clone cake for viewer
+                const cakeClone = this.cakeGroup.clone();
+                viewerScene.add(cakeClone);
+                
+                // Make candles glow in viewer
+                cakeClone.children.forEach(child => {
+                    if (child.children) {
+                        child.children.forEach(c => {
+                            if (c.type === 'PointLight') {
+                                c.intensity = 2;
+                            }
+                        });
+                    }
+                });
+                
+                // Mouse controls
+                let isDragging = false;
+                let previousMousePosition = { x: 0, y: 0 };
+                
+                container.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+                
+                container.addEventListener('mouseup', () => isDragging = false);
+                container.addEventListener('mouseleave', () => isDragging = false);
+                
+                container.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    
+                    const deltaMove = {
+                        x: e.clientX - previousMousePosition.x,
+                        y: e.clientY - previousMousePosition.y
+                    };
+                    
+                    cakeClone.rotation.y += deltaMove.x * 0.01;
+                    cakeClone.rotation.x += deltaMove.y * 0.01;
+                    
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+                
+                // Touch controls
+                container.addEventListener('touchstart', (e) => {
+                    isDragging = true;
+                    previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                });
+                
+                container.addEventListener('touchend', () => isDragging = false);
+                
+                container.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    
+                    const deltaMove = {
+                        x: e.touches[0].clientX - previousMousePosition.x,
+                        y: e.touches[0].clientY - previousMousePosition.y
+                    };
+                    
+                    cakeClone.rotation.y += deltaMove.x * 0.01;
+                    cakeClone.rotation.x += deltaMove.y * 0.01;
+                    
+                    previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                });
+                
+                // Zoom
+                container.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    viewerCamera.position.z += e.deltaY * 0.01;
+                    viewerCamera.position.z = Math.max(2, Math.min(10, viewerCamera.position.z));
+                });
+                
+                // Animate
+                const animateViewer = () => {
+                    requestAnimationFrame(animateViewer);
+                    cakeClone.rotation.y += 0.005;
+                    viewerRenderer.render(viewerScene, viewerCamera);
+                };
+                animateViewer();
+                
+                // Handle resize
+                window.addEventListener('resize', () => {
+                    viewerCamera.aspect = container.clientWidth / container.clientHeight;
+                    viewerCamera.updateProjectionMatrix();
+                    viewerRenderer.setSize(container.clientWidth, container.clientHeight);
+                });
             }
             
             animate() {

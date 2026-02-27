@@ -268,14 +268,26 @@ function CrystalBall({ photos }) {
 }
 
 function App() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Set to false to skip loading screen
   const [currentMessage, setCurrentMessage] = useState(0);
   const [showWishButton, setShowWishButton] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const audioContextRef = useRef(null);
   
   useEffect(() => {
-    setTimeout(() => setLoading(false), 3500);
+    // Fallback: Force loading to false after 5 seconds regardless
+    const fallbackTimer = setTimeout(() => {
+      console.log('[DEBUG] Fallback timer fired - forcing loading false');
+      const loadingEl = document.getElementById('loading-screen');
+      if (loadingEl) loadingEl.style.display = 'none';
+      setLoading(false);
+    }, 5000);
+    
+    setTimeout(() => {
+      console.log('[DEBUG] Timeout reached - calling setLoading(false)');
+      setLoading(false);
+      console.log('[DEBUG] setLoading(false) called');
+    }, 2000);
     
     const interval = setInterval(() => {
       setCurrentMessage(prev => (prev + 1) % CONFIG.messages.length);
@@ -313,7 +325,7 @@ function App() {
   
   if (loading) {
     return (
-      <div style={{
+      <div id="loading-screen" style={{
         position: 'fixed',
         inset: 0,
         background: 'linear-gradient(135deg, #0F172A 0%, #1a1a2e 50%, #0F172A 100%)',

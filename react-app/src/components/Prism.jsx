@@ -53,7 +53,12 @@ function Prism() {
   const rendererRef = useRef(null);
   
   useEffect(() => {
-    if (!containerRef.current) return;
+    console.log('[DEBUG] Prism useEffect running');
+    
+    if (!containerRef.current) {
+      console.log('[DEBUG] Prism: containerRef.current is null, returning');
+      return;
+    }
     
     const container = containerRef.current;
     const width = window.innerWidth;

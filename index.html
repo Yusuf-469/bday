@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Happy Birthday Mom</title>
     
@@ -10,10 +11,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Three.js & GSAP -->
+    <!-- Three.js, GSAP & OGL -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/ogl@1.0.3/dist/ogl.umd.js"></script>
     
     <style>
         :root {
@@ -857,7 +859,7 @@
         };
 
         // ========================================
-        // PRISM BACKGROUND - Full Screen Beautiful Effect (Same as OGL but using Three.js)
+        // OGL PRISM BACKGROUND - Full Screen Beautiful Effect
         // ========================================
         class PrismBackground {
             constructor(container) {
@@ -866,27 +868,9 @@
             }
             
             init() {
-                this.scene = new THREE.Scene();
-                this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+                const { Renderer, Triangle, Program, Mesh } = OGL;
                 
-                this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-                this.renderer.setClearColor(0x000000, 0);
-                
-                Object.assign(this.renderer.domElement.style, {
-                    position: 'absolute',
-                    inset: '0',
-                    width: '100%',
-                    height: '100%',
-                    display: 'block'
-                });
-                
-                this.container.appendChild(this.renderer.domElement);
-                
-                const geometry = new THREE.PlaneGeometry(2, 2);
-                
-                // Parameters from user's request
+                // Parameters from user's example
                 const H = 3.5;
                 const BW = 5.5;
                 const BASE_HALF = BW * 0.5;
@@ -898,138 +882,167 @@
                 const BLOOM = 1;
                 const TS = 0.5;
                 
-                this.material = new THREE.ShaderMaterial({
-                    vertexShader: `
-                        attribute vec2 position;
-                        void main() {
-                            gl_Position = vec4(position, 0.0, 1.0);
+                const dpr = Math.min(2, window.devicePixelRatio || 1);
+                this.renderer = new Renderer({
+                    dpr,
+                    alpha: true,
+                    antialias: false
+                });
+                const gl = this.renderer.gl;
+                gl.disable(gl.DEPTH_TEST);
+                gl.disable(gl.CULL_FACE);
+                gl.disable(gl.BLEND);
+
+                Object.assign(gl.canvas.style, {
+                    position: 'absolute',
+                    inset: '0',
+                    width: '100%',
+                    height: '100%',
+                    display: 'block'
+                });
+                
+                this.container.appendChild(gl.canvas);
+
+                const vertex = /* glsl */ `
+                    attribute vec2 position;
+                    void main() {
+                        gl_Position = vec4(position, 0.0, 1.0);
+                    }
+                `;
+
+                const fragment = /* glsl */ `
+                    precision highp float;
+
+                    uniform vec2  iResolution;
+                    uniform float iTime;
+
+                    uniform float uHeight;
+                    uniform float uBaseHalf;
+                    uniform mat3  uRot;
+                    uniform int   uUseBaseWobble;
+                    uniform float uGlow;
+                    uniform vec2  uOffsetPx;
+                    uniform float uNoise;
+                    uniform float uSaturation;
+                    uniform float uScale;
+                    uniform float uHueShift;
+                    uniform float uColorFreq;
+                    uniform float uBloom;
+                    uniform float uCenterShift;
+                    uniform float uInvBaseHalf;
+                    uniform float uInvHeight;
+                    uniform float uMinAxis;
+                    uniform float uPxScale;
+                    uniform float uTimeScale;
+
+                    vec4 tanh4(vec4 x){
+                        vec4 e2x = exp(2.0*x);
+                        return (e2x - 1.0) / (e2x + 1.0);
+                    }
+
+                    float rand(vec2 co){
+                        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453123);
+                    }
+
+                    float sdOctaAnisoInv(vec3 p){
+                        vec3 q = vec3(abs(p.x) * uInvBaseHalf, abs(p.y) * uInvHeight, abs(p.z) * uInvBaseHalf);
+                        float m = q.x + q.y + q.z - 1.0;
+                        return m * uMinAxis * 0.5773502691896258;
+                    }
+
+                    float sdPyramidUpInv(vec3 p){
+                        float oct = sdOctaAnisoInv(p);
+                        float halfSpace = -p.y;
+                        return max(oct, halfSpace);
+                    }
+
+                    mat3 hueRotation(float a){
+                        float c = cos(a), s = sin(a);
+                        mat3 W = mat3(
+                            0.299, 0.587, 0.114,
+                            0.299, 0.587, 0.114,
+                            0.299, 0.587, 0.114
+                        );
+                        mat3 U = mat3(
+                            0.701, -0.587, -0.114,
+                            -0.299,  0.413, -0.114,
+                            -0.300, -0.588,  0.886
+                        );
+                        mat3 V = mat3(
+                            0.168, -0.331,  0.500,
+                            0.328,  0.035, -0.500,
+                            -0.497,  0.296,  0.201
+                        );
+                        return W + U * c + V * s;
+                    }
+
+                    void main(){
+                        vec2 f = (gl_FragCoord.xy - 0.5 * iResolution.xy - uOffsetPx) * uPxScale;
+
+                        float z = 5.0;
+                        float d = 0.0;
+
+                        vec3 p;
+                        vec4 o = vec4(0.0);
+
+                        float centerShift = uCenterShift;
+                        float cf = uColorFreq;
+
+                        mat2 wob = mat2(1.0);
+                        if (uUseBaseWobble == 1) {
+                            float t = iTime * uTimeScale;
+                            float c0 = cos(t + 0.0);
+                            float c1 = cos(t + 33.0);
+                            float c2 = cos(t + 11.0);
+                            wob = mat2(c0, c1, c2, c0);
                         }
-                    `,
-                    fragmentShader: `
-                        precision highp float;
 
-                        uniform vec2  iResolution;
-                        uniform float iTime;
-
-                        uniform float uHeight;
-                        uniform float uBaseHalf;
-                        uniform mat3  uRot;
-                        uniform int   uUseBaseWobble;
-                        uniform float uGlow;
-                        uniform vec2  uOffsetPx;
-                        uniform float uNoise;
-                        uniform float uSaturation;
-                        uniform float uScale;
-                        uniform float uHueShift;
-                        uniform float uColorFreq;
-                        uniform float uBloom;
-                        uniform float uCenterShift;
-                        uniform float uInvBaseHalf;
-                        uniform float uInvHeight;
-                        uniform float uMinAxis;
-                        uniform float uPxScale;
-                        uniform float uTimeScale;
-
-                        vec4 tanh4(vec4 x){
-                            vec4 e2x = exp(2.0*x);
-                            return (e2x - 1.0) / (e2x + 1.0);
+                        const int STEPS = 100;
+                        for (int i = 0; i < STEPS; i++) {
+                            p = vec3(f, z);
+                            p.xz = p.xz * wob;
+                            p = uRot * p;
+                            vec3 q = p;
+                            q.y += centerShift;
+                            d = 0.1 + 0.2 * abs(sdPyramidUpInv(q));
+                            z -= d;
+                            o += (sin((p.y + z) * cf + vec4(0.0, 1.0, 2.0, 3.0)) + 1.0) / d;
                         }
 
-                        float rand(vec2 co){
-                            return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453123);
+                        o = tanh4(o * o * (uGlow * uBloom) / 1e5);
+
+                        vec3 col = o.rgb;
+                        float n = rand(gl_FragCoord.xy + vec2(iTime));
+                        col += (n - 0.5) * uNoise;
+                        col = clamp(col, 0.0, 1.0);
+
+                        float L = dot(col, vec3(0.2126, 0.7152, 0.0722));
+                        col = clamp(mix(vec3(L), col, uSaturation), 0.0, 1.0);
+
+                        if(abs(uHueShift) > 0.0001){
+                            col = clamp(hueRotation(uHueShift) * col, 0.0, 1.0);
                         }
 
-                        float sdOctaAnisoInv(vec3 p){
-                            vec3 q = vec3(abs(p.x) * uInvBaseHalf, abs(p.y) * uInvHeight, abs(p.z) * uInvBaseHalf);
-                            float m = q.x + q.y + q.z - 1.0;
-                            return m * uMinAxis * 0.5773502691896258;
-                        }
+                        gl_FragColor = vec4(col, o.a);
+                    }
+                `;
 
-                        float sdPyramidUpInv(vec3 p){
-                            float oct = sdOctaAnisoInv(p);
-                            float halfSpace = -p.y;
-                            return max(oct, halfSpace);
-                        }
+                const geometry = new Triangle(gl);
+                const iResBuf = new Float32Array(2);
+                const offsetPxBuf = new Float32Array(2);
 
-                        mat3 hueRotation(float a){
-                            float c = cos(a), s = sin(a);
-                            mat3 W = mat3(
-                                0.299, 0.587, 0.114,
-                                0.299, 0.587, 0.114,
-                                0.299, 0.587, 0.114
-                            );
-                            mat3 U = mat3(
-                                0.701, -0.587, -0.114,
-                                -0.299,  0.413, -0.114,
-                                -0.300, -0.588,  0.886
-                            );
-                            mat3 V = mat3(
-                                0.168, -0.331,  0.500,
-                                0.328,  0.035, -0.500,
-                                -0.497,  0.296,  0.201
-                            );
-                            return W + U * c + V * s;
-                        }
-
-                        void main(){
-                            vec2 f = (gl_FragCoord.xy - 0.5 * iResolution.xy - uOffsetPx) * uPxScale;
-
-                            float z = 5.0;
-                            float d = 0.0;
-
-                            vec3 p;
-                            vec4 o = vec4(0.0);
-
-                            float centerShift = uCenterShift;
-                            float cf = uColorFreq;
-
-                            mat2 wob = mat2(1.0);
-                            if (uUseBaseWobble == 1) {
-                                float t = iTime * uTimeScale;
-                                float c0 = cos(t + 0.0);
-                                float c1 = cos(t + 33.0);
-                                float c2 = cos(t + 11.0);
-                                wob = mat2(c0, c1, c2, c0);
-                            }
-
-                            const int STEPS = 100;
-                            for (int i = 0; i < STEPS; i++) {
-                                p = vec3(f, z);
-                                p.xz = p.xz * wob;
-                                p = uRot * p;
-                                vec3 q = p;
-                                q.y += centerShift;
-                                d = 0.1 + 0.2 * abs(sdPyramidUpInv(q));
-                                z -= d;
-                                o += (sin((p.y + z) * cf + vec4(0.0, 1.0, 2.0, 3.0)) + 1.0) / d;
-                            }
-
-                            o = tanh4(o * o * (uGlow * uBloom) / 1e5);
-
-                            vec3 col = o.rgb;
-                            float n = rand(gl_FragCoord.xy + vec2(iTime));
-                            col += (n - 0.5) * uNoise;
-                            col = clamp(col, 0.0, 1.0);
-
-                            float L = dot(col, vec3(0.2126, 0.7152, 0.0722));
-                            col = clamp(mix(vec3(L), col, uSaturation), 0.0, 1.0);
-
-                            if(abs(uHueShift) > 0.0001){
-                                col = clamp(hueRotation(uHueShift) * col, 0.0, 1.0);
-                            }
-
-                            gl_FragColor = vec4(col, o.a);
-                        }
-                    `,
+                this.program = new Program(gl, {
+                    vertex,
+                    fragment,
                     uniforms: {
-                        iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                        iResolution: { value: iResBuf },
                         iTime: { value: 0 },
                         uHeight: { value: H },
                         uBaseHalf: { value: BASE_HALF },
                         uUseBaseWobble: { value: 1 },
-                        uRot: { value: new THREE.Matrix3() },
+                        uRot: { value: new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]) },
                         uGlow: { value: GLOW },
-                        uOffsetPx: { value: new THREE.Vector2(0, 0) },
+                        uOffsetPx: { value: offsetPxBuf },
                         uNoise: { value: NOISE },
                         uSaturation: { value: 1.5 },
                         uScale: { value: SCALE },
@@ -1040,50 +1053,53 @@
                         uInvBaseHalf: { value: 1 / BASE_HALF },
                         uInvHeight: { value: 1 / H },
                         uMinAxis: { value: Math.min(BASE_HALF, H) },
-                        uPxScale: { value: 1 / ((window.innerHeight) * 0.1 * SCALE) },
+                        uPxScale: {
+                            value: 1 / ((gl.drawingBufferHeight || 1) * 0.1 * SCALE)
+                        },
                         uTimeScale: { value: TS }
-                    },
-                    transparent: true,
-                    depthWrite: false,
-                    depthTest: false
+                    }
                 });
+                const mesh = new Mesh(gl, { geometry, program: this.program });
+
+                const resize = () => {
+                    const w = window.innerWidth;
+                    const h = window.innerHeight;
+                    this.renderer.setSize(w, h);
+                    iResBuf[0] = gl.drawingBufferWidth;
+                    iResBuf[1] = gl.drawingBufferHeight;
+                    offsetPxBuf[0] = 0;
+                    offsetPxBuf[1] = 0;
+                    this.program.uniforms.uPxScale.value = 1 / ((gl.drawingBufferHeight || 1) * 0.1 * SCALE);
+                };
                 
-                const mesh = new THREE.Mesh(geometry, this.material);
-                this.scene.add(mesh);
-                
-                window.addEventListener('resize', () => this.resize());
-                this.animate();
-            }
-            
-            resize() {
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
-                const SCALE = 3.6;
-                this.material.uniforms.uPxScale.value = 1 / ((window.innerHeight) * 0.1 * SCALE);
-            }
-            
-            animate() {
-                const t0 = performance.now();
-                
-                const setMat3FromEuler = (yawY, pitchX, rollZ) => {
+                window.addEventListener('resize', resize);
+                resize();
+
+                const rotBuf = new Float32Array(9);
+                const setMat3FromEuler = (yawY, pitchX, rollZ, out) => {
                     const cy = Math.cos(yawY), sy = Math.sin(yawY);
                     const cx = Math.cos(pitchX), sx = Math.sin(pitchX);
                     const cz = Math.cos(rollZ), sz = Math.sin(rollZ);
-                    const m = new THREE.Matrix3();
-                    m.set(
-                        cy * cz + sy * sx * sz, cx * sz, -sy * cz + cy * sx * sz,
-                        -cy * sz + sy * sx * cz, cx * cz, sy * sz + cy * sx * cz,
-                        sy * cx, -sx, cy * cx
-                    );
-                    return m;
+                    out[0] = cy * cz + sy * sx * sz;
+                    out[1] = cx * sz;
+                    out[2] = -sy * cz + cy * sx * sz;
+                    out[3] = -cy * sz + sy * sx * cz;
+                    out[4] = cx * cz;
+                    out[5] = sy * sz + cy * sx * cz;
+                    out[6] = sy * cx;
+                    out[7] = -sx;
+                    out[8] = cy * cx;
+                    return out;
                 };
+
+                let raf = 0;
+                const t0 = performance.now();
                 
                 const render = (t) => {
                     const time = (t - t0) * 0.001;
-                    this.material.uniforms.iTime.value = time;
-                    
-                    // Same animation as OGL rotate mode
-                    const TS = 0.5;
+                    this.program.uniforms.iTime.value = time;
+
+                    // Same animation as rotate mode
                     const wX = 0.4;
                     const wY = 0.3;
                     const wZ = 0.2;
@@ -1094,14 +1110,14 @@
                     const yaw = tScaled * wY;
                     const pitch = Math.sin(tScaled * wX + phX) * 0.5;
                     const roll = Math.sin(tScaled * wZ + phZ) * 0.4;
-                    
-                    this.material.uniforms.uRot.value = setMat3FromEuler(yaw, pitch, roll);
-                    
-                    this.renderer.render(this.scene, this.camera);
-                    requestAnimationFrame(render);
+                    this.program.uniforms.uRot.value = setMat3FromEuler(yaw, pitch, roll, rotBuf);
+
+                    this.renderer.render({ scene: mesh });
+                    raf = requestAnimationFrame(render);
                 };
                 
-                requestAnimationFrame(render);
+                raf = requestAnimationFrame(render);
+                this.raf = raf;
             }
         }
 

@@ -12,12 +12,13 @@ const CONFIG = {
     'My first love, my eternal inspiration...',
     'Happy Birthday, Mom'
   ],
-  // Using placeholder images since assets need to be in public folder
+  // Using local assets from public folder
   memoryPhotos: [
-    'https://picsum.photos/seed/mom1/400/600',
-    'https://picsum.photos/seed/mom2/400/600',
-    'https://picsum.photos/seed/mom3/400/600',
-    'https://picsum.photos/seed/mom4/400/600'
+    '/assets/1.jpeg',
+    '/assets/2.jpeg',
+    '/assets/3.jpeg',
+    '/assets/4.jpeg',
+    '/assets/5.jpeg'
   ]
 };
 

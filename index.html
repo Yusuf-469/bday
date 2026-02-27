@@ -879,9 +879,9 @@
                 
                 const geometry = new THREE.PlaneGeometry(2, 2);
                 
-                // Larger, more visible parameters
-                const H = 2.0;
-                const BW = 3.0;
+                // HUGE prism parameters for full screen effect
+                const H = 1.2;
+                const BW = 1.8;
                 const BASE_HALF = BW * 0.5;
                 
                 this.material = new THREE.ShaderMaterial({
@@ -949,7 +949,7 @@
                             float c2 = cos(t + 11.0);
                             mat2 wob = mat2(c0, c1, c2, c0);
 
-                            const int STEPS = 80;
+                            const int STEPS = 100;
                             for (int i = 0; i < STEPS; i++) {
                                 p = vec3(f, z);
                                 p.xz = p.xz * wob;
@@ -979,19 +979,19 @@
                         uHeight: { value: H },
                         uBaseHalf: { value: BASE_HALF },
                         uRot: { value: new THREE.Matrix3() },
-                        uGlow: { value: 1.5 },
+                        uGlow: { value: 2.0 },
                         uOffsetPx: { value: new THREE.Vector2(0, 0) },
                         uNoise: { value: 0.0 },
-                        uSaturation: { value: 1.5 },
-                        uScale: { value: 0.8 },
+                        uSaturation: { value: 1.8 },
+                        uScale: { value: 0.4 },
                         uColorFreq: { value: 1.0 },
-                        uBloom: { value: 1.5 },
+                        uBloom: { value: 2.0 },
                         uCenterShift: { value: H * 0.25 },
                         uInvBaseHalf: { value: 1 / BASE_HALF },
                         uInvHeight: { value: 1 / H },
                         uMinAxis: { value: Math.min(BASE_HALF, H) },
-                        uPxScale: { value: 0.5 },
-                        uTimeScale: { value: 0.3 }
+                        uPxScale: { value: 1.5 },
+                        uTimeScale: { value: 0.2 }
                     },
                     transparent: true,
                     depthWrite: false,

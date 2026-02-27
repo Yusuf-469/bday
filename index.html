@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Happy Birthday Mom</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
+    
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --gold-light: #F4E4C1;
+            --sapphire: #0F172A;
+            --candle-warm: #FFF8E7;
+            --pearl: #E8D5E0;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --shadow-luxury: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: transparent;
+            color: var(--candle-warm);
+            overflow-x: hidden;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        #prism-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+        }
+        
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 10;
+            padding: 20px;
+        }
+        
+        .airdrop-card {
+            width: min(90vw, 400px);
+            padding: 40px 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            box-shadow: var(--shadow-luxury);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        .airdrop-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(212, 175, 55, 0.4);
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        
+        .airdrop-title {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .airdrop-title h2 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            font-weight: 500;
+            color: var(--gold-light);
+            letter-spacing: 0.5px;
+        }
+        
+        .airdrop-title h2 span {
+            font-weight: 700;
+            color: var(--gold);
+        }
+        
+        .message-container {
+            min-height: 80px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .message {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.2rem, 3vw, 1.6rem);
+            font-weight: 500;
+            color: var(--candle-warm);
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .message .highlight {
+            background: linear-gradient(90deg, var(--gold-light), var(--gold), var(--gold-light));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        
+        .wish-button {
+            display: block;
+            width: 100%;
+            padding: 18px 30px;
+            background: transparent;
+            border: 2px solid var(--gold);
+            border-radius: 50px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .wish-button:hover {
+            color: var(--sapphire);
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+        }
+        
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        .scroll-indicator span {
+            font-size: 0.8rem;
+            color: var(--gold-light);
+            opacity: 0.7;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+        
+        .orb-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 10;
+            padding: 50px 20px;
+        }
+        
+        .crystal-orb {
+            width: min(350px, 80vw);
+            height: min(350px, 80vw);
+            position: relative;
+            cursor: grab;
+        }
+        
+        .orb-sphere {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, rgba(212,175,55,0.2) 30%, rgba(15,23,42,0.8) 70%, rgba(15,23,42,1) 100%);
+            box-shadow: 0 0 60px rgba(212,175,55,0.3), inset 0 0 60px rgba(255,255,255,0.1), 0 0 100px rgba(15,23,42,0.5);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .orb-image {
+            position: absolute;
+            inset: 10%;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease;
+        }
+        
+        .orb-base {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--gold), #8B7355);
+            border-radius: 0 0 30px 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .particle {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 0 10px var(--gold);
+        }
+        
+        .sparkle {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .audio-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .audio-toggle svg {
+            fill: var(--gold);
+        }
+        
+        @media (max-width: 768px) {
+            .airdrop-card {
+                padding: 30px 20px;
+            }
+            
+            .airdrop-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="prism-canvas"></canvas>
+    <div id="canvas-container"></div>
+    
+    <section class="hero">
+        <div class="airdrop-card">
+            <div class="airdrop-icon">❤️</div>
+            <div class="airdrop-title">
+                <h2>AirDrop from <span>Yusuf</span></h2>
+            </div>
+            <div class="message-container">
+                <p class="message">
+                    <span class="highlight" id="typewriter"></span>
+                </p>
+            </div>
+            <button class="wish-button" id="wishBtn">Make a Wish</button>
+        </div>
+        
+        <div class="scroll-indicator">
+            <span>Scroll to explore</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#D4AF37">
+                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+        </div>
+    </section>
+    
+    <section class="orb-section">
+        <div class="crystal-orb" id="crystalOrb">
+            <div class="orb-sphere">
+                <div class="orb-image" id="orbImage"></div>
+            </div>
+            <div class="orb-base"></div>
+        </div>
+    </section>
+    
+    <button class="audio-toggle" id="audioToggle">
+        <svg width="24" height="24" viewBox="0 0 24 24" id="audioIcon">
+            <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+        </svg>
+    </button>
+    
+    <script>
+        // Prism Background Shader
+        const prismCanvas = document.getElementById('prism-canvas');
+        const prismRenderer = new THREE.WebGLRenderer({ canvas: prismCanvas, antialias: true, alpha: true });
+        prismRenderer.setSize(window.innerWidth, window.innerHeight);
+        prismRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        
+        const prismScene = new THREE.Scene();
+        const prismCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        
+        const prismGeometry = new THREE.PlaneGeometry(2, 2);
+        const prismMaterial = new THREE.ShaderMaterial({
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float uTime;
+                varying vec2 vUv;
+                
+                vec3 hsv2rgb(vec3 c) {
+                    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                }
+                
+                void main() {
+                    vec2 uv = vUv;
+                    float t = uTime * 0.15;
+                    
+                    float n1 = sin(uv.x * 3.0 + t) * cos(uv.y * 2.0 - t * 0.5);
+                    float n2 = sin(uv.y * 4.0 - t * 0.7) * cos(uv.x * 3.0 + t * 0.3);
+                    float n3 = sin((uv.x + uv.y) * 5.0 + t * 0.4);
+                    
+                    float hue = fract(n1 * 0.5 + n2 * 0.3 + n3 * 0.2 + t * 0.1);
+                    hue = mod(hue + 0.5, 1.0);
+                    
+                    float sat = 0.7 + 0.3 * sin(uv.x * 2.0 + uv.y * 3.0 + t);
+                    float val = 0.5 + 0.5 * sin(uv.x * 4.0 - uv.y * 2.0 + t * 0.5);
+                    
+                    vec3 col = hsv2rgb(vec3(hue, sat, val));
+                    
+                    vec2 center = vec2(0.5, 0.5);
+                    float dist = length(uv - center);
+                    float glow = 1.0 - smoothstep(0.0, 0.8, dist);
+                    col += vec3(1.0, 0.9, 0.7) * glow * 0.3;
+                    
+                    float vignette = 1.0 - smoothstep(0.4, 1.2, dist);
+                    col *= vignette * 0.5 + 0.5;
+                    
+                    gl_FragColor = vec4(col, 1.0);
+                }
+            `,
+            uniforms: {
+                uTime: { value: 0 }
+            }
+        });
+        
+        const prismPlane = new THREE.Mesh(prismGeometry, prismMaterial);
+        prismScene.add(prismPlane);
+        
+        function animatePrism() {
+            prismMaterial.uniforms.uTime.value += 0.016;
+            prismRenderer.render(prismScene, prismCamera);
+            requestAnimationFrame(animatePrism);
+        }
+        animatePrism();
+        
+        window.addEventListener('resize', () => {
+            prismRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 3D Scene
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 8);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x000000, 0);
+        container.appendChild(renderer.domElement);
+        
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xFFF8E7, 0.4);
+        scene.add(ambientLight);
+        
+        const spotLight = new THREE.SpotLight(0xffffff, 2);
+        spotLight.position.set(0, 10, 5);
+        spotLight.angle = Math.PI / 6;
+        spotLight.penumbra = 0.5;
+        spotLight.castShadow = true;
+        scene.add(spotLight);
+        
+        const goldLight1 = new THREE.PointLight(0xD4AF37, 0.5);
+        goldLight1.position.set(-5, 3, 0);
+        scene.add(goldLight1);
+        
+        const goldLight2 = new THREE.PointLight(0xD4AF37, 0.5);
+        goldLight2.position.set(5, 3, 0);
+        scene.add(goldLight2);
+        
+        // Cake Group
+        const cakeGroup = new THREE.Group();
+        
+        // Plate
+        const plateGeom = new THREE.CylinderGeometry(2.5, 2.3, 0.1, 64);
+        const plateMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, metalness: 0.3 });
+        const plate = new THREE.Mesh(plateGeom, plateMat);
+        plate.position.y = -0.05;
+        plate.receiveShadow = true;
+        cakeGroup.add(plate);
+        
+        // Tier 1
+        const tier1Geom = new THREE.CylinderGeometry(2.0, 2.1, 0.8, 64);
+        const tierMat = new THREE.MeshStandardMaterial({ color: 0xFFF8F0, roughness: 0.3 });
+        const tier1 = new THREE.Mesh(tier1Geom, tierMat);
+        tier1.position.y = 0.4;
+        tier1.castShadow = true;
+        cakeGroup.add(tier1);
+        
+        // Gold Ring 1
+        const ring1Geom = new THREE.TorusGeometry(1.52, 0.03, 16, 64);
+        const goldMat = new THREE.MeshStandardMaterial({ color: 0xD4AF37, roughness: 0.1, metalness: 1, emissive: 0xD4AF37, emissiveIntensity: 0.1 });
+        const ring1 = new THREE.Mesh(ring1Geom, goldMat);
+        ring1.position.y = 0.8;
+        ring1.rotation.x = Math.PI / 2;
+        cakeGroup.add(ring1);
+        
+        // Tier 2
+        const tier2Geom = new THREE.CylinderGeometry(1.5, 1.55, 0.7, 64);
+        const tier2 = new THREE.Mesh(tier2Geom, tierMat);
+        tier2.position.y = 1.15;
+        tier2.castShadow = true;
+        cakeGroup.add(tier2);
+        
+        // Gold Ring 2
+        const ring2Geom = new THREE.TorusGeometry(1.02, 0.03, 16, 64);
+        const ring2 = new THREE.Mesh(ring2Geom, goldMat);
+        ring2.position.y = 1.55;
+        ring2.rotation.x = Math.PI / 2;
+        cakeGroup.add(ring2);
+        
+        // Tier 3
+        const tier3Geom = new THREE.CylinderGeometry(1.0, 1.05, 0.6, 64);
+        const tier3 = new THREE.Mesh(tier3Geom, tierMat);
+        tier3.position.y = 1.8;
+        tier3.castShadow = true;
+        cakeGroup.add(tier3);
+        
+        // Flowers
+        const flowerColors = [0xFFB6C1, 0xFF69B4, 0xFFD700, 0xE6E6FA, 0xFFB6C1];
+        const flowerPositions = [
+            [1.8, 0.6, 0.5], [-1.5, 0.7, 0.8], [0.3, 1.4, 1.3], [-0.8, 1.5, -1.0], [1.2, 2.0, -0.5]
+        ];
+        
+        flowerPositions.forEach((pos, i) => {
+            const flowerGeom = new THREE.SphereGeometry(0.15, 16, 16);
+            const flowerMat = new THREE.MeshStandardMaterial({ 
+                color: flowerColors[i], 
+                roughness: 0.4, 
+                metalness: 0.1, 
+                transparent: true, 
+                opacity: 0.9 
+            });
+            const flower = new THREE.Mesh(flowerGeom, flowerMat);
+            flower.position.set(...pos);
+            flower.scale.y = 0.6;
+            cakeGroup.add(flower);
+        });
+        
+        // Candle flames
+        const flamePositions = [[0, 2.1, 0], [0.5, 2.1, 0.5], [-0.5, 2.1, 0.5]];
+        
+        flamePositions.forEach(pos => {
+            const flameGeom = new THREE.ConeGeometry(0.06, 0.2, 16);
+            const flameMat = new THREE.MeshBasicMaterial({ color: 0xFF9500, transparent: true, opacity: 0.8 });
+            const flame = new THREE.Mesh(flameGeom, flameMat);
+            flame.position.set(pos[0], pos[1] + 0.35, pos[2]);
+            cakeGroup.add(flame);
+            
+            const flameLight = new THREE.PointLight(0xFF9500, 1.5, 3);
+            flameLight.position.set(pos[0], pos[1] + 0.4, pos[2]);
+            cakeGroup.add(flameLight);
+        });
+        
+        scene.add(cakeGroup);
+        
+        // Sparkles
+        const sparkleCount = 150;
+        const sparkleGeom = new THREE.BufferGeometry();
+        const sparklePositions = [];
+        
+        for (let i = 0; i < sparkleCount; i++) {
+            sparklePositions.push(
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 20
+            );
+        }
+        
+        sparkleGeom.setAttribute('position', new THREE.Float32BufferAttribute(sparklePositions, 3));
+        const sparkleMat = new THREE.PointsMaterial({ color: 0xD4AF37, size: 0.1, transparent: true, opacity: 0.8 });
+        const sparkles = new THREE.Points(sparkleGeom, sparkleMat);
+        scene.add(sparkles);
+        
+        // Animation
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.016;
+            
+            // Cake floating
+            cakeGroup.position.y = Math.sin(time * 0.5) * 0.1;
+            cakeGroup.rotation.y = Math.sin(time * 0.2) * 0.05;
+            
+            // Sparkles rotation
+            sparkles.rotation.y = time * 0.05;
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Typewriter effect
+        const messages = [
+            'To the woman who gave me everything...',
+            'My first love, my eternal inspiration...',
+            'Happy Birthday, Mom'
+        ];
+        
+        let messageIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        const typewriterEl = document.getElementById('typewriter');
+        
+        function typeWriter() {
+            const currentMessage = messages[messageIndex];
+            
+            if (isDeleting) {
+                typewriterEl.textContent = currentMessage.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                typewriterEl.textContent = currentMessage.substring(0, charIndex + 1);
+                charIndex++;
+            }
+            
+            let typeSpeed = isDeleting ? 30 : 50;
+            
+            if (!isDeleting && charIndex === currentMessage.length) {
+                typeSpeed = 3000;
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                messageIndex = (messageIndex + 1) % messages.length;
+                typeSpeed = 500;
+            }
+            
+            setTimeout(typeWriter, typeSpeed);
+        }
+        
+        setTimeout(typeWriter, 1000);
+        
+        // Wish button - create sparkles
+        document.getElementById('wishBtn').addEventListener('click', function() {
+            this.style.display = 'none';
+            
+            for (let i = 0; i < 30; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.background = Math.random() > 0.5 ? '#D4AF37' : '#FFF8E7';
+                sparkle.style.left = '50%';
+                sparkle.style.top = '50%';
+                document.body.appendChild(sparkle);
+                
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 200 + 50;
+                
+                sparkle.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: 1000,
+                    easing: 'ease-out'
+                }).onfinish = () => sparkle.remove();
+            }
+        });
+        
+        // Crystal orb - image rotation
+        const orbImage = document.getElementById('orbImage');
+        const images = ['/assets/1.jpeg', '/assets/2.jpeg', '/assets/3.jpeg', '/assets/4.jpeg', '/assets/5.jpeg'];
+        let currentImageIndex = 0;
+        let orbRotation = 0;
+        let isDragging = false;
+        let startX = 0;
+        
+        orbImage.style.backgroundImage = `url(${images[0]})`;
+        
+        setInterval(() => {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            orbImage.style.backgroundImage = `url(${images[currentImageIndex]})`;
+        }, 3000);
+        
+        const crystalOrb = document.getElementById('crystalOrb');
+        
+        crystalOrb.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+        });
+        
+        crystalOrb.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const delta = e.clientX - startX;
+            orbRotation += delta * 0.5;
+            orbImage.style.transform = `rotateY(${orbRotation}deg)`;
+            startX = e.clientX;
+        });
+        
+        crystalOrb.addEventListener('mouseup', () => isDragging = false);
+        crystalOrb.addEventListener('mouseleave', () => isDragging = false);
+        
+        // Click effect on orb
+        crystalOrb.addEventListener('click', (e) => {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.width = `${Math.random() * 8 + 4}px`;
+                particle.style.height = particle.style.width;
+                particle.style.background = Math.random() > 0.5 ? '#D4AF37' : '#FFF8E7';
+                particle.style.left = `${e.clientX}px`;
+                particle.style.top = `${e.clientY}px`;
+                document.body.appendChild(particle);
+                
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 100 + 50;
+                
+                particle.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: 1000,
+                    easing: 'ease-out'
+                }).onfinish = () => particle.remove();
+            }
+        });
+        
+        // Audio toggle
+        let audioEnabled = false;
+        let audioContext = null;
+        
+        document.getElementById('audioToggle').addEventListener('click', () => {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('audioIcon');
+            
+            if (audioEnabled) {
+                icon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } else {
+                icon.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+            }
+        });
+    </script>
+</body>
+</html>

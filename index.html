@@ -11,10 +11,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Three.js, GSAP & OGL (ES Module) -->
+    <!-- Three.js, GSAP & OGL (ES Module from esm.sh) -->
     <script type="module">
-        // Import OGL as ES module to bypass CSP
-        import OGL from 'https://unpkg.com/ogl@1.0.3/src/index.js';
+        // Import OGL as ES module from esm.sh CDN to bypass CSP
+        import OGL from 'https://esm.sh/ogl@1.0.3';
         window.OGL = OGL;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>

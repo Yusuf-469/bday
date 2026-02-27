@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Environment, Float, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import Prism from './components/Prism';
 
-// Configuration
+// Configuration - using external assets
 const CONFIG = {
   senderName: 'Aapka Beta Yusuf',
   messages: [
@@ -12,11 +12,12 @@ const CONFIG = {
     'My first love, my eternal inspiration...',
     'Happy Birthday, Mom'
   ],
+  // Using placeholder images since assets need to be in public folder
   memoryPhotos: [
-    '/assets/1.jpeg',
-    '/assets/2.jpeg',
-    '/assets/3.jpeg',
-    '/assets/4.jpeg'
+    'https://picsum.photos/seed/mom1/400/600',
+    'https://picsum.photos/seed/mom2/400/600',
+    'https://picsum.photos/seed/mom3/400/600',
+    'https://picsum.photos/seed/mom4/400/600'
   ]
 };
 
@@ -44,7 +45,7 @@ function CandleFlame({ position }) {
 }
 
 // Birthday Cake Component
-function BirthdayCake({ onCandlesReady }) {
+function BirthdayCake() {
   const groupRef = useRef();
   
   useFrame(({ clock }) => {
@@ -53,10 +54,6 @@ function BirthdayCake({ onCandlesReady }) {
       groupRef.current.rotation.y = Math.sin(clock.getElapsedTime() * 0.2) * 0.05;
     }
   });
-  
-  useEffect(() => {
-    if (onCandlesReady) onCandlesReady();
-  }, []);
   
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
@@ -144,7 +141,6 @@ function MemoryCard({ photo, index }) {
   
   return (
     <div 
-      className="memory-card"
       onClick={() => setIsFlipped(!isFlipped)}
       style={{
         flexShrink: 0,
@@ -209,10 +205,6 @@ function CrystalBall({ photos }) {
   
   const handleClick = (e) => {
     // Create magical particles
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
     for (let i = 0; i < 10; i++) {
       const particle = document.createElement('div');
       particle.style.cssText = `
@@ -297,7 +289,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [currentMessage, setCurrentMessage] = useState(0);
   const [showWishButton, setShowWishButton] = useState(true);
-  const [candlesBlown, setCandlesBlown] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const audioContextRef = useRef(null);
   
@@ -346,7 +337,7 @@ function App() {
       <div style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(15, 23, 42, 0.9)',
+        background: 'linear-gradient(135deg, #0F172A 0%, #1a1a2e 50%, #0F172A 100%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -358,9 +349,17 @@ function App() {
           height: '200px',
           borderRadius: '20px',
           overflow: 'hidden',
-          boxShadow: '0 0 40px rgba(212, 175, 55, 0.5)'
+          boxShadow: '0 0 40px rgba(212, 175, 55, 0.5)',
+          background: 'linear-gradient(135deg, #D4AF37, #F4E4C1)'
         }}>
-          <img src="/assets/4.jpeg" alt="Loading" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '4rem'
+          }}>🎂</div>
         </div>
         <h1 style={{
           marginTop: '30px',
@@ -381,8 +380,8 @@ function App() {
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* Prism Background */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
+      {/* Prism Background - Full Screen */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: '#0F172A' }}>
         <Prism 
           animationType="rotate"
           timeScale={0.5}
@@ -431,9 +430,14 @@ function App() {
             margin: '0 auto 20px',
             borderRadius: '20px',
             overflow: 'hidden',
-            boxShadow: '0 10px 40px rgba(212, 175, 55, 0.4)'
+            boxShadow: '0 10px 40px rgba(212, 175, 55, 0.4)',
+            background: 'linear-gradient(135deg, #D4AF37, #F4E4C1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '2rem'
           }}>
-            <img src="/assets/5.jpeg" alt="Yusuf" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ❤️
           </div>
           
           <div style={{ textAlign: 'center', marginBottom: '25px' }}>
@@ -490,10 +494,12 @@ function App() {
               }}
               onMouseOver={(e) => {
                 e.target.style.color = '#0F172A';
+                e.target.style.background = 'linear-gradient(135deg, #D4AF37, #F4E4C1)';
                 e.target.style.boxShadow = '0 0 30px rgba(212, 175, 55, 0.5)';
               }}
               onMouseOut={(e) => {
                 e.target.style.color = '#D4AF37';
+                e.target.style.background = 'transparent';
                 e.target.style.boxShadow = 'none';
               }}
             >
@@ -559,15 +565,6 @@ function App() {
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        <h2 style={{
-          fontFamily: 'Playfair Display, serif',
-          fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-          textAlign: 'center',
-          marginBottom: '60px',
-          color: '#D4AF37',
-          display: 'none'
-        }}>Treasured Moments</h2>
-        
         <CrystalBall photos={CONFIG.memoryPhotos} />
       </section>
       

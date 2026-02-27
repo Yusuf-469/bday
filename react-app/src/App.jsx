@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, Float, Sparkles } from '@react-three/drei';
-import * as THREE from 'three';
-import Prism from './components/Prism';
 
-// Configuration - using external assets
+// Configuration - using local assets
 const CONFIG = {
   senderName: 'Aapka Beta Yusuf',
   messages: [
@@ -12,7 +8,6 @@ const CONFIG = {
     'My first love, my eternal inspiration...',
     'Happy Birthday, Mom'
   ],
-  // Using local assets from public folder
   memoryPhotos: [
     '/assets/1.jpeg',
     '/assets/2.jpeg',
@@ -21,120 +16,6 @@ const CONFIG = {
     '/assets/5.jpeg'
   ]
 };
-
-// Candle Flame Component
-function CandleFlame({ position }) {
-  const meshRef = useRef();
-  
-  useFrame(({ clock }) => {
-    if (meshRef.current) {
-      const t = clock.getElapsedTime();
-      meshRef.current.scale.x = 1 + Math.sin(t * 10) * 0.1;
-      meshRef.current.scale.z = 1 + Math.cos(t * 8) * 0.1;
-    }
-  });
-  
-  return (
-    <group position={position}>
-      <mesh ref={meshRef} position={[0, 0.35, 0]}>
-        <coneGeometry args={[0.06, 0.2, 16]} />
-        <meshBasicMaterial color="#FF9500" transparent opacity={0.8} />
-      </mesh>
-      <pointLight position={[0, 0.4, 0]} intensity={1.5} color="#FF9500" distance={3} />
-    </group>
-  );
-}
-
-// Birthday Cake Component
-function BirthdayCake() {
-  const groupRef = useRef();
-  
-  useFrame(({ clock }) => {
-    if (groupRef.current) {
-      groupRef.current.position.y = Math.sin(clock.getElapsedTime() * 0.5) * 0.1;
-      groupRef.current.rotation.y = Math.sin(clock.getElapsedTime() * 0.2) * 0.05;
-    }
-  });
-  
-  return (
-    <group ref={groupRef} position={[0, 0, 0]}>
-      {/* Plate */}
-      <mesh position={[0, -0.05, 0]} receiveShadow>
-        <cylinderGeometry args={[2.5, 2.3, 0.1, 64]} />
-        <meshStandardMaterial color="#FFFFFF" roughness={0.1} metalness={0.3} />
-      </mesh>
-      
-      {/* Tier 1 */}
-      <mesh position={[0, 0.4, 0]} castShadow>
-        <cylinderGeometry args={[2.0, 2.1, 0.8, 64]} />
-        <meshStandardMaterial color="#FFF8F0" roughness={0.3} />
-      </mesh>
-      
-      {/* Gold Ring 1 */}
-      <mesh position={[0, 0.8, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.52, 0.03, 16, 64]} />
-        <meshStandardMaterial color="#D4AF37" roughness={0.1} metalness={1} emissive="#D4AF37" emissiveIntensity={0.1} />
-      </mesh>
-      
-      {/* Tier 2 */}
-      <mesh position={[0, 1.15, 0]} castShadow>
-        <cylinderGeometry args={[1.5, 1.55, 0.7, 64]} />
-        <meshStandardMaterial color="#FFF8F0" roughness={0.3} />
-      </mesh>
-      
-      {/* Gold Ring 2 */}
-      <mesh position={[0, 1.55, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.02, 0.03, 16, 64]} />
-        <meshStandardMaterial color="#D4AF37" roughness={0.1} metalness={1} emissive="#D4AF37" emissiveIntensity={0.1} />
-      </mesh>
-      
-      {/* Tier 3 */}
-      <mesh position={[0, 1.8, 0]} castShadow>
-        <cylinderGeometry args={[1.0, 1.05, 0.6, 64]} />
-        <meshStandardMaterial color="#FFF8F0" roughness={0.3} />
-      </mesh>
-      
-      {/* Flowers */}
-      {[
-        { pos: [1.8, 0.6, 0.5], color: '#FFB6C1' },
-        { pos: [-1.5, 0.7, 0.8], color: '#FF69B4' },
-        { pos: [0.3, 1.4, 1.3], color: '#FFD700' },
-        { pos: [-0.8, 1.5, -1.0], color: '#E6E6FA' },
-        { pos: [1.2, 2.0, -0.5], color: '#FFB6C1' }
-      ].map((flower, i) => (
-        <mesh key={i} position={flower.pos} scale={[1, 0.6, 1]}>
-          <sphereGeometry args={[0.15, 16, 16]} />
-          <meshStandardMaterial color={flower.color} roughness={0.4} metalness={0.1} transparent opacity={0.9} />
-        </mesh>
-      ))}
-      
-      {/* Candles */}
-      <CandleFlame position={[0, 2.1, 0]} />
-      <CandleFlame position={[0.5, 2.1, 0.5]} />
-      <CandleFlame position={[-0.5, 2.1, 0.5]} />
-    </group>
-  );
-}
-
-// Main Scene
-function Scene() {
-  return (
-    <>
-      <ambientLight intensity={0.4} color="#FFF8E7" />
-      <spotLight position={[0, 10, 5]} angle={Math.PI / 6} penumbra={0.5} intensity={2} castShadow />
-      <pointLight position={[-5, 3, 0]} intensity={0.5} color="#D4AF37" />
-      <pointLight position={[5, 3, 0]} intensity={0.5} color="#D4AF37" />
-      
-      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.3}>
-        <BirthdayCake />
-      </Float>
-      
-      <Sparkles count={150} scale={10} size={2} speed={0.3} color="#D4AF37" />
-      
-      <Environment preset="sunset" />
-    </>
-  );
-}
 
 // Memory Card Component
 function MemoryCard({ photo, index }) {
@@ -147,17 +28,16 @@ function MemoryCard({ photo, index }) {
         flexShrink: 0,
         width: 'min(280px, 70vw)',
         aspectRatio: '3/4',
-        borderRadius: '20px',
-        padding: '10px',
-        background: 'linear-gradient(145deg, rgba(26,26,26,0.8), rgba(42,42,42,0.8))',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
         cursor: 'pointer',
         transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0)',
         transition: 'transform 0.6s ease',
         position: 'relative',
         border: '2px solid #D4AF37',
         borderRadius: '22px',
-        opacity: 0.8
+        opacity: 0.8,
+        background: 'linear-gradient(145deg, rgba(26,26,26,0.8), rgba(42,42,42,0.8))',
+        padding: '10px',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
       }}
     >
       <img 
@@ -205,7 +85,6 @@ function CrystalBall({ photos }) {
   };
   
   const handleClick = (e) => {
-    // Create magical particles
     for (let i = 0; i < 10; i++) {
       const particle = document.createElement('div');
       particle.style.cssText = `
@@ -305,7 +184,6 @@ function App() {
   
   const handleWish = () => {
     setShowWishButton(false);
-    // Create sparkles
     for (let i = 0; i < 30; i++) {
       const sparkle = document.createElement('div');
       sparkle.style.cssText = `
@@ -377,31 +255,36 @@ function App() {
     <div style={{ 
       width: '100vw', 
       minHeight: '100vh', 
-      background: '#0F172A',
+      background: 'linear-gradient(135deg, #0F172A 0%, #1a1a2e 50%, #0F172A 100%)',
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* Prism Background - Full Screen */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: '#0F172A' }}>
-        <Prism 
-          animationType="rotate"
-          timeScale={0.5}
-          height={3.5}
-          baseWidth={5.5}
-          scale={3.6}
-          hueShift={0}
-          colorFrequency={1}
-          noise={0}
-          glow={1}
-        />
-      </div>
+      {/* Animated Gradient Background */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'linear-gradient(-45deg, #0F172A, #1a1a2e, #0F172A, #2d1f3d, #0F172A)',
+        backgroundSize: '400% 400%',
+        animation: 'gradientBG 15s ease infinite',
+        zIndex: 0
+      }} />
       
-      {/* 3D Cake Scene */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 1 }}>
-        <Canvas shadows camera={{ position: [0, 2, 8], fov: 45 }}>
-          <Scene />
-        </Canvas>
-      </div>
+      {/* Floating Orbs */}
+      {[...Array(8)].map((_, i) => (
+        <div key={i} style={{
+          position: 'fixed',
+          width: `${Math.random() * 200 + 100}px`,
+          height: `${Math.random() * 200 + 100}px`,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, rgba(212,175,55,${Math.random() * 0.15 + 0.05}) 0%, transparent 70%)`,
+          left: `${Math.random() * 100}%`,
+          top: `${Math.random() * 100}%`,
+          animation: `float ${Math.random() * 10 + 10}s ease-in-out infinite`,
+          animationDelay: `${Math.random() * 5}s`,
+          zIndex: 0,
+          pointerEvents: 'none'
+        }} />
+      ))}
       
       {/* Hero Section - AirDrop Card */}
       <section style={{
@@ -413,7 +296,7 @@ function App() {
         zIndex: 10,
         padding: '20px'
       }}>
-        <div className="airdrop-card" style={{
+        <div style={{
           width: 'min(90vw, 400px)',
           padding: '40px 30px',
           background: 'rgba(255, 255, 255, 0.08)',
@@ -606,6 +489,15 @@ function App() {
         @keyframes shimmer {
           0% { background-position: 0% center; }
           100% { background-position: 200% center; }
+        }
+        @keyframes gradientBG {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-30px) rotate(180deg); }
         }
         body { margin: 0; padding: 0; }
       `}</style>

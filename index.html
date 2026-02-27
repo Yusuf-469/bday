@@ -879,8 +879,8 @@
                 
                 const geometry = new THREE.PlaneGeometry(2, 2);
                 
-                const H = 10.0;
-                const BW = 15.0;
+                const H = 15.0;
+                const BW = 20.0;
                 const BASE_HALF = BW * 0.5;
                 
                 this.material = new THREE.ShaderMaterial({
@@ -977,12 +977,16 @@
                         iTime: { value: 0 },
                         uHeight: { value: H },
                         uBaseHalf: { value: BASE_HALF },
-                        uRot: { value: new THREE.Matrix3() },
+                        uRot: { value: new THREE.Matrix3().set(
+                            1, 0, 0,
+                            0, 1, 0,
+                            0, 0, 1
+                       ) },
                         uGlow: { value: 2.0 },
                         uOffsetPx: { value: new THREE.Vector2(0, 0) },
                         uNoise: { value: 0.0 },
                         uSaturation: { value: 2.0 },
-                        uScale: { value: 12.5 },
+                        uScale: { value: 25.0 },
                         uColorFreq: { value: 1.0 },
                         uBloom: { value: 2.0 },
                         uCenterShift: { value: H * 0.25 },
